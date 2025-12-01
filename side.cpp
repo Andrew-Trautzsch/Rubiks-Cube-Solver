@@ -3,22 +3,14 @@
 ///// SIDE IMPLEMENTATION /////
 
 // returns 0-8, number == amount of colors != center
-int Side::colorMismatch()
-{
+int Side::colorMismatch() const {
     Color center = getCenter();
     int count = 0;
-
     for (int r = 0; r < SIZE; ++r)
-    {
         for (int c = 0; c < SIZE; ++c)
-        {
             if (squares[r][c] != center)
                 ++count;
-        }
-    }
-
-    // exclude the center cell itself (always matches)
-    return count - 1; // or std::max(0, count - 1) if you want to be extra safe
+    return count;   // 0..8
 }
 
 // accessors
@@ -88,7 +80,6 @@ void Side::rotateCCW()
 // rotate 180° (can just do two CW rotations)
 void Side::rotate180()
 {
-    // simplest: two CW turns
     rotateCW();
     rotateCW();
 }

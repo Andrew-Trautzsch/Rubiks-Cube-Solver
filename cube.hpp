@@ -39,6 +39,12 @@ enum Turn
     Double
 };
 
+struct Move
+{
+    Face face;
+    Turn turn;
+};
+
 ///// CUBE STRUCTURES /////
 
 /*
@@ -61,7 +67,7 @@ struct Side
     }
 
     // returns 0-8, number == amount of colors =/ center
-    int colorMismatch();
+    int colorMismatch() const;
 
     // accessors
     vector<Color> getRow(int) const;
@@ -89,6 +95,7 @@ public:
     void scramble(int moveCount); // randomizes cube
 
     Side& face(Face input) { return faces_[input]; }
+    const Side& face(Face input) const { return faces_[input]; }
 
     // baseline for moves, will call rotations
     void applyMove(Face, Turn);
@@ -98,6 +105,20 @@ public:
     // Heurstic helpers
     bool operator==(const RubiksCube& other) const;
     bool operator!=(const RubiksCube& other) const { return !(*this == other); }
+
+    int misplacedFacelets() const;
+    // Convenience: apply a Move struct
+    void applyMove(const Move& m) { applyMove(m.face, m.turn); }
+
+    // For A*: simple heuristic wrapper you already added earlier
+    int heuristic() const { return misplacedFacelets(); }
+
+    // Hash of the cube state (for unordered_map)
+    std::size_t hash() const;
+
+    // A* solver: returns sequence of moves from *this to solved
+    // maxDepth: depth cutoff; maxNodes: safety cap to avoid explosion
+    vector<Move> solveAStar(int maxDepth = 12, int maxNodes = 100000) const;
 
 private:
     array<Side, FACE_COUNT> faces_;
