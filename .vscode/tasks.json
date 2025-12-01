@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-rubiks-opengl",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "cube.cpp",
+        "side.cpp",
+        "main.cpp",
+        "-Iexternal/freeglut/include",
+        "-Lexternal/freeglut/lib/x64",
+        "-lfreeglut",
+        "-lglu32",
+        "-lopengl32",
+        "-o",
+        "rubiks_opengl.exe"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$gcc"
+    }
+  ]
+}
