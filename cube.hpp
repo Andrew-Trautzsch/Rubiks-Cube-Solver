@@ -105,13 +105,16 @@ public:
     // Heurstic helpers
     bool operator==(const RubiksCube& other) const;
     bool operator!=(const RubiksCube& other) const { return !(*this == other); }
-
-    int misplacedFacelets() const;
+    
     // Convenience: apply a Move struct
     void applyMove(const Move& m) { applyMove(m.face, m.turn); }
 
-    // For A*: simple heuristic wrapper you already added earlier
-    int heuristic() const { return misplacedFacelets(); }
+        // Heuristic based on cubie-like corner/edge slots
+    int cubieHeuristic() const;
+
+    // This is what your A* should call
+    int heuristic() const { return cubieHeuristic(); }
+
 
     // Hash of the cube state (for unordered_map)
     std::size_t hash() const;

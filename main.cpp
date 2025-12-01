@@ -103,7 +103,7 @@ int main()
     std::cout << "Heuristic: " << cube.heuristic() << "\n\n";
 
     // Scramble a bit
-    cube.scramble(5);
+    cube.scramble(8);
     std::cout << "After scramble:\n";
     printCube(cube);
     std::cout << "Heuristic: " << cube.heuristic() << "\n\n";

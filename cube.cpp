@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <queue>
 #include <cstdint>
+#include <array>
+#include <cstdint>
 
 ///// RUBIKSCUBE IMPLEMENTATION /////
 
@@ -117,13 +119,6 @@ bool RubiksCube::operator==(const RubiksCube& other) const
         }
     }
     return true;
-}
-
-int RubiksCube::misplacedFacelets() const {
-    int total = 0;
-    for (int f = 0; f < FACE_COUNT; ++f)
-        total += faces_[f].colorMismatch();
-    return total;   // >= 0
 }
 
 ///// HEURISTICS /////
@@ -622,4 +617,198 @@ void RubiksCube::rotateBack(Turn t)
         cwNeighbors();
         break;
     }
+}
+
+///// CUBIE /////
+
+struct StickerPos {
+    Face f;
+    int r;
+    int c;
+};
+
+struct CornerSlot {
+    StickerPos s[3];
+};
+
+struct EdgeSlot {
+    StickerPos s[2];
+};
+
+// Corner slots: each is a fixed *position* in the cube,
+// defined by 3 stickers (face, row, col).
+// We choose a consistent mapping in the solved state:
+//
+// 0: UFR, 1: UFL, 2: UBL, 3: UBR,
+// 4: DFR, 5: DFL, 6: DBL, 7: DBR
+static const CornerSlot kCornerSlots[8] = {
+    // 0: UFR
+    { { {Up,   2, 2}, {Front, 0, 2}, {Right, 0, 0} } },
+    // 1: UFL
+    { { {Up,   2, 0}, {Front, 0, 0}, {Left,  0, 2} } },
+    // 2: UBL
+    { { {Up,   0, 0}, {Back,  0, 2}, {Left,  0, 0} } },
+    // 3: UBR
+    { { {Up,   0, 2}, {Back,  0, 0}, {Right, 0, 2} } },
+    // 4: DFR
+    { { {Down, 0, 2}, {Front, 2, 2}, {Right, 2, 0} } },
+    // 5: DFL
+    { { {Down, 0, 0}, {Front, 2, 0}, {Left,  2, 2} } },
+    // 6: DBL
+    { { {Down, 2, 0}, {Back,  2, 2}, {Left,  2, 0} } },
+    // 7: DBR
+    { { {Down, 2, 2}, {Back,  2, 0}, {Right, 2, 2} } }
+};
+
+// Edge slots: 12 fixed positions, each with 2 stickers.
+// 0: UF, 1: UR, 2: UB, 3: UL,
+// 4: DF, 5: DR, 6: DB, 7: DL,
+// 8: FR, 9: FL, 10: BR, 11: BL
+static const EdgeSlot kEdgeSlots[12] = {
+    // 0: UF
+    { { {Up,   2, 1}, {Front, 0, 1} } },
+    // 1: UR
+    { { {Up,   1, 2}, {Right, 0, 1} } },
+    // 2: UB
+    { { {Up,   0, 1}, {Back,  0, 1} } },
+    // 3: UL
+    { { {Up,   1, 0}, {Left,  0, 1} } },
+    // 4: DF
+    { { {Down, 0, 1}, {Front, 2, 1} } },
+    // 5: DR
+    { { {Down, 1, 2}, {Right, 2, 1} } },
+    // 6: DB
+    { { {Down, 2, 1}, {Back,  2, 1} } },
+    // 7: DL
+    { { {Down, 1, 0}, {Left,  2, 1} } },
+    // 8: FR
+    { { {Front, 1, 2}, {Right, 1, 0} } },
+    // 9: FL
+    { { {Front, 1, 0}, {Left,  1, 2} } },
+    // 10: BR
+    { { {Back,  1, 0}, {Right, 1, 2} } },
+    // 11: BL
+    { { {Back,  1, 2}, {Left,  1, 0} } }
+};
+
+// Cubie-style heuristic implementation
+int RubiksCube::cubieHeuristic() const {
+    using std::array;
+    using std::sort;
+
+    // We'll cache what the corner/edge colors look like
+    // in the solved cube, so we can compare against it.
+    static bool initialized = false;
+    static Color solvedCornerColors[8][3];
+    static Color solvedEdgeColors[12][2];
+
+    if (!initialized) {
+        RubiksCube solved; // default ctor = solved cube
+
+        // For each corner slot, record its 3 colors in solved state
+        for (int i = 0; i < 8; ++i) {
+            for (int k = 0; k < 3; ++k) {
+                const StickerPos &sp = kCornerSlots[i].s[k];
+                solvedCornerColors[i][k] =
+                    solved.faces_[sp.f].squares[sp.r][sp.c];
+            }
+        }
+
+        // For each edge slot, record its 2 colors in solved state
+        for (int i = 0; i < 12; ++i) {
+            for (int k = 0; k < 2; ++k) {
+                const StickerPos &sp = kEdgeSlots[i].s[k];
+                solvedEdgeColors[i][k] =
+                    solved.faces_[sp.f].squares[sp.r][sp.c];
+            }
+        }
+
+        initialized = true;
+    }
+
+    int misplacedCorners     = 0;
+    int misorientedCorners   = 0;
+    int misplacedEdges       = 0;
+    int misorientedEdges     = 0;
+
+    // ----- Corners -----
+    for (int i = 0; i < 8; ++i) {
+        Color cur[3];
+        for (int k = 0; k < 3; ++k) {
+            const StickerPos &sp = kCornerSlots[i].s[k];
+            cur[k] = faces_[sp.f].squares[sp.r][sp.c];
+        }
+
+        // Compare as sets (ignore order)
+        array<int,3> setSolved{};
+        array<int,3> setCur{};
+        for (int k = 0; k < 3; ++k) {
+            setSolved[k] = static_cast<int>(solvedCornerColors[i][k]);
+            setCur[k]    = static_cast<int>(cur[k]);
+        }
+        sort(setSolved.begin(), setSolved.end());
+        sort(setCur.begin(), setCur.end());
+
+        if (setSolved != setCur) {
+            // This slot doesn't even have the right triple of colors:
+            // "wrong cubie" in this corner slot.
+            ++misplacedCorners;
+        } else {
+            // Right colors, check orientation (exact order)
+            bool sameOrder = true;
+            for (int k = 0; k < 3; ++k) {
+                if (cur[k] != solvedCornerColors[i][k]) {
+                    sameOrder = false;
+                    break;
+                }
+            }
+            if (!sameOrder)
+                ++misorientedCorners;
+        }
+    }
+
+    // ----- Edges -----
+    for (int i = 0; i < 12; ++i) {
+        Color cur[2];
+        for (int k = 0; k < 2; ++k) {
+            const StickerPos &sp = kEdgeSlots[i].s[k];
+            cur[k] = faces_[sp.f].squares[sp.r][sp.c];
+        }
+
+        int s0 = static_cast<int>(solvedEdgeColors[i][0]);
+        int s1 = static_cast<int>(solvedEdgeColors[i][1]);
+        int c0 = static_cast<int>(cur[0]);
+        int c1 = static_cast<int>(cur[1]);
+
+        // Compare as sets (order-insensitive)
+        bool setMatch = ((s0 == c0 && s1 == c1) ||
+                         (s0 == c1 && s1 == c0));
+
+        if (!setMatch) {
+            ++misplacedEdges;
+        } else {
+            // Right edge colors, check if flipped
+            bool sameOrder = (s0 == c0 && s1 == c1);
+            if (!sameOrder)
+                ++misorientedEdges;
+        }
+    }
+
+    auto ceil_div = [](int x, int d) {
+        return (x + d - 1) / d;  // integer ceil(x / d)
+    };
+
+    // Lower bounds based on how many pieces can be fixed per move.
+    int h_pos_corners = ceil_div(misplacedCorners,     4); // ≤ 4 corners moved per turn
+    int h_pos_edges   = ceil_div(misplacedEdges,       4); // ≤ 4 edges  moved per turn
+    int h_ori_corners = ceil_div(misorientedCorners,   3); // corner twist bound
+    int h_ori_edges   = ceil_div(misorientedEdges,     4); // edge flip bound
+
+    int h = std::max(
+        std::max(h_pos_corners, h_pos_edges),
+        std::max(h_ori_corners, h_ori_edges)
+    );
+
+    if (h < 0) h = 0;
+    return h;
 }
