@@ -447,10 +447,7 @@ vector<Move> RubiksCube::solveIDAStar(int maxIterations, int iterationDepth) con
 
 ///// FACE ROTATION HELPERS /////
 //
-// These currently only have the *structure*.
-// You will fill in the actual neighbor-strip logic later.
-// For now, they just rotate the face itself, so you can test Side behavior.
-// Once you’re ready, you’ll extend each to also adjust the adjacent faces.
+// Extended to adjust adjacent faces correctly.
 //
 
 void RubiksCube::rotateTop(Turn t)
@@ -464,22 +461,29 @@ void RubiksCube::rotateTop(Turn t)
         Side &B = faces_[Back];
         Side &L = faces_[Left];
 
-        // Cycle the TOP rows: F -> R -> B -> L -> F
+        // Cycle the TOP rows: F -> L -> B -> R -> F
+        // Correct assignment order:
+        // tmp = F
+        // F = R
+        // R = B
+        // B = L
+        // L = tmp
+        
         Color tmp[Side::SIZE];
         for (int i = 0; i < Side::SIZE; ++i)
-            tmp[i] = F.squares[0][i];              // save Front top row
+            tmp[i] = F.squares[0][i];              
 
         for (int i = 0; i < Side::SIZE; ++i)
-            F.squares[0][i] = L.squares[0][i];     // F <- L
+            F.squares[0][i] = R.squares[0][i];     
 
         for (int i = 0; i < Side::SIZE; ++i)
-            L.squares[0][i] = B.squares[0][i];     // L <- B
+            R.squares[0][i] = B.squares[0][i];     
 
         for (int i = 0; i < Side::SIZE; ++i)
-            B.squares[0][i] = R.squares[0][i];     // B <- R
+            B.squares[0][i] = L.squares[0][i];     
 
         for (int i = 0; i < Side::SIZE; ++i)
-            R.squares[0][i] = tmp[i];              // R <- old F
+            L.squares[0][i] = tmp[i];              
     };
 
     switch (t)
@@ -515,21 +519,28 @@ void RubiksCube::rotateBottom(Turn t)
         Side &L = faces_[Left];
 
         // Cycle the BOTTOM rows: F -> R -> B -> L -> F
+        // Assignment order: 
+        // tmp = F
+        // F = L
+        // L = B
+        // B = R
+        // R = tmp
+
         Color tmp[Side::SIZE];
         for (int i = 0; i < Side::SIZE; ++i)
-            tmp[i] = F.squares[Side::SIZE - 1][i];          // save Front bottom row
+            tmp[i] = F.squares[Side::SIZE - 1][i];          
 
         for (int i = 0; i < Side::SIZE; ++i)
-            F.squares[Side::SIZE - 1][i] = R.squares[Side::SIZE - 1][i]; // F <- R
+            F.squares[Side::SIZE - 1][i] = L.squares[Side::SIZE - 1][i]; 
 
         for (int i = 0; i < Side::SIZE; ++i)
-            R.squares[Side::SIZE - 1][i] = B.squares[Side::SIZE - 1][i]; // R <- B
+            L.squares[Side::SIZE - 1][i] = B.squares[Side::SIZE - 1][i]; 
 
         for (int i = 0; i < Side::SIZE; ++i)
-            B.squares[Side::SIZE - 1][i] = L.squares[Side::SIZE - 1][i]; // B <- L
+            B.squares[Side::SIZE - 1][i] = R.squares[Side::SIZE - 1][i]; 
 
         for (int i = 0; i < Side::SIZE; ++i)
-            L.squares[Side::SIZE - 1][i] = tmp[i];                        // L <- old F
+            R.squares[Side::SIZE - 1][i] = tmp[i];                       
     };
 
     switch (t)
@@ -565,21 +576,32 @@ void RubiksCube::rotateLeft(Turn t)
         Side &B = faces_[Back];
 
         // Cycle the LEFT columns: U -> F -> D -> B -> U
+        // Requires reversals for U->F (No, Direct), D->B (Reverse), B->U (Reverse).
+        // Wait, Logic check:
+        // U->F (Direct)
+        // F->D (Direct)
+        // D->B (Reverse)
+        // B->U (Reverse)
+
         Color tmp[Side::SIZE];
         for (int i = 0; i < Side::SIZE; ++i)
-            tmp[i] = U.squares[i][0];                 // save Up left column
+            tmp[i] = U.squares[i][0];                 
 
+        // U <- B (Reverse: B[2-i] -> U[i])
         for (int i = 0; i < Side::SIZE; ++i)
-            U.squares[i][0] = B.squares[i][Side::SIZE - 1]; // U <- B right column
+            U.squares[i][0] = B.squares[Side::SIZE - 1 - i][Side::SIZE - 1]; 
 
+        // B <- D (Reverse: D[2-i] -> B[i])
         for (int i = 0; i < Side::SIZE; ++i)
-            B.squares[i][Side::SIZE - 1] = D.squares[i][0]; // B <- D left column
+            B.squares[i][Side::SIZE - 1] = D.squares[Side::SIZE - 1 - i][0]; 
 
+        // D <- F (Direct)
         for (int i = 0; i < Side::SIZE; ++i)
-            D.squares[i][0] = F.squares[i][0];        // D <- F left column
+            D.squares[i][0] = F.squares[i][0];        
 
+        // F <- Old U (Direct)
         for (int i = 0; i < Side::SIZE; ++i)
-            F.squares[i][0] = tmp[i];                 // F <- old U
+            F.squares[i][0] = tmp[i];                 
     };
 
     switch (t)
@@ -614,22 +636,32 @@ void RubiksCube::rotateRight(Turn t)
         Side &D = faces_[Down];
         Side &B = faces_[Back];
 
-        // Cycle the RIGHT columns: U -> F -> D -> B -> U
+        // Cycle the RIGHT columns: U -> B -> D -> F -> U
+        // Logic check:
+        // U->B (Reverse)
+        // B->D (Reverse)
+        // D->F (Direct)
+        // F->U (Direct)
+
         Color tmp[Side::SIZE];
         for (int i = 0; i < Side::SIZE; ++i)
-            tmp[i] = U.squares[i][Side::SIZE - 1];            // save Up right column
+            tmp[i] = U.squares[i][Side::SIZE - 1];            
 
+        // U <- F (Direct)
         for (int i = 0; i < Side::SIZE; ++i)
-            U.squares[i][Side::SIZE - 1] = F.squares[i][Side::SIZE - 1];  // U <- F right
+            U.squares[i][Side::SIZE - 1] = F.squares[i][Side::SIZE - 1];  
 
+        // F <- D (Direct)
         for (int i = 0; i < Side::SIZE; ++i)
-            F.squares[i][Side::SIZE - 1] = D.squares[i][Side::SIZE - 1];  // F <- D right
+            F.squares[i][Side::SIZE - 1] = D.squares[i][Side::SIZE - 1];  
 
+        // D <- B (Reverse)
         for (int i = 0; i < Side::SIZE; ++i)
-            D.squares[i][Side::SIZE - 1] = B.squares[i][0];               // D <- B left
+            D.squares[i][Side::SIZE - 1] = B.squares[Side::SIZE - 1 - i][0];               
 
+        // B <- Old U (Reverse)
         for (int i = 0; i < Side::SIZE; ++i)
-            B.squares[i][0] = tmp[i];                                     // B <- old U
+            B.squares[i][0] = tmp[Side::SIZE - 1 - i];                                     
     };
 
     switch (t)
@@ -664,25 +696,30 @@ void RubiksCube::rotateFront(Turn t)
         Side &L = faces_[Left];
         Side &R = faces_[Right];
 
-        // Cycle edges around FRONT:
-        // U bottom row, L right column, D top row, R left column
+        // Cycle edges around FRONT: U -> R -> D -> L -> U
+        // Logic check:
+        // U->R (Direct)
+        // R->D (Reverse)
+        // D->L (Direct)
+        // L->U (Reverse)
+
         Color tmp[Side::SIZE];
         for (int i = 0; i < Side::SIZE; ++i)
-            tmp[i] = U.squares[Side::SIZE - 1][i];         // save Up bottom row
+            tmp[i] = U.squares[Side::SIZE - 1][i];         
 
-        // U bottom <- L right column
+        // U <- L (Reverse: L[i][2] -> U[2][2-i])
         for (int i = 0; i < Side::SIZE; ++i)
-            U.squares[Side::SIZE - 1][i] = L.squares[i][Side::SIZE - 1];
+            U.squares[Side::SIZE - 1][i] = L.squares[Side::SIZE - 1 - i][Side::SIZE - 1];
 
-        // L right column <- D top row
+        // L <- D (Direct: D[0][i] -> L[i][2])
         for (int i = 0; i < Side::SIZE; ++i)
             L.squares[i][Side::SIZE - 1] = D.squares[0][i];
 
-        // D top row <- R left column
+        // D <- R (Reverse: R[i][0] -> D[0][2-i])
         for (int i = 0; i < Side::SIZE; ++i)
-            D.squares[0][i] = R.squares[i][0];
+            D.squares[0][i] = R.squares[Side::SIZE - 1 - i][0];
 
-        // R left column <- old U bottom
+        // R <- Old U (Direct: tmp[i] -> R[i][0])
         for (int i = 0; i < Side::SIZE; ++i)
             R.squares[i][0] = tmp[i];
     };
@@ -719,27 +756,32 @@ void RubiksCube::rotateBack(Turn t)
         Side &L = faces_[Left];
         Side &R = faces_[Right];
 
-        // Cycle edges around BACK:
-        // U top row, R right column, D bottom row, L left column
+        // Cycle edges around BACK: U -> L -> D -> R -> U
+        // Logic Check:
+        // U->L (Reverse)
+        // L->D (Direct)
+        // D->R (Reverse)
+        // R->U (Direct)
+
         Color tmp[Side::SIZE];
         for (int i = 0; i < Side::SIZE; ++i)
-            tmp[i] = U.squares[0][i];                 // save Up top row
+            tmp[i] = U.squares[0][i];                 
 
-        // U top <- R right column
+        // U <- R (Direct: R[i][2] -> U[0][i])
         for (int i = 0; i < Side::SIZE; ++i)
             U.squares[0][i] = R.squares[i][Side::SIZE - 1];
 
-        // R right column <- D bottom row
+        // R <- D (Reverse: D[2][i] -> R[2-i][2])
         for (int i = 0; i < Side::SIZE; ++i)
-            R.squares[i][Side::SIZE - 1] = D.squares[Side::SIZE - 1][i];
+            R.squares[i][Side::SIZE - 1] = D.squares[Side::SIZE - 1][Side::SIZE - 1 - i];
 
-        // D bottom row <- L left column
+        // D <- L (Direct: L[i][0] -> D[2][i])
         for (int i = 0; i < Side::SIZE; ++i)
             D.squares[Side::SIZE - 1][i] = L.squares[i][0];
 
-        // L left column <- old U top
+        // L <- Old U (Reverse: tmp[i] -> L[2-i][0])
         for (int i = 0; i < Side::SIZE; ++i)
-            L.squares[i][0] = tmp[i];
+            L.squares[i][0] = tmp[Side::SIZE - 1 - i];
     };
 
     switch (t)

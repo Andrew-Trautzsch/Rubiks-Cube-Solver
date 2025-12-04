@@ -154,12 +154,10 @@ bool currentAnimatedAngle(float &outAngle)
     if (t > 1.0f) t = 1.0f;
     const float baseAngle = 90.0f;
 
-    // For Up and Down, the sign is opposite from the other faces
-    // so that the visual rotation matches the cube's neighbor-strip
-    // logic in rotateTop/rotateBottom.
-    float faceSign = (g_currentMove.face == Up || g_currentMove.face == Down)
-                     ? 1.0f
-                     : -1.0f;
+    // FIX: All faces use negative sign for CW visual rotation.
+    // OpenGL +angle is CCW around the axis.
+    // Since our logic (cube.cpp) is now standard CW, we want visual CW.
+    float faceSign = -1.0f;
 
     switch (g_currentMove.turn)
     {
