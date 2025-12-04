@@ -7,8 +7,40 @@
 #include <cstdint>
 #include <array>
 #include <cstdint>
+#include <limits>
+#include <functional>
 
 ///// RUBIKSCUBE IMPLEMENTATION /////
+
+// Shared move list for both A* and IDA*
+namespace {
+    const Move kAllMoves[] = {
+        {Up,    CW}, {Up,    CCW}, {Up,    Double},
+        {Down,  CW}, {Down,  CCW}, {Down,  Double},
+        {Left,  CW}, {Left,  CCW}, {Left,  Double},
+        {Right, CW}, {Right, CCW}, {Right, Double},
+        {Front, CW}, {Front, CCW}, {Front, Double},
+        {Back,  CW}, {Back,  CCW}, {Back,  Double}
+    };
+
+    inline bool isInverseMove(const Move& a, const Move& b)
+    {
+        if (a.face != b.face) return false;
+        if (a.turn == Double && b.turn == Double) return true;
+        if ((a.turn == CW && b.turn == CCW) || (a.turn == CCW && b.turn == CW))
+            return true;
+        return false;
+    }
+
+    inline Move inverseOf(const Move& m)
+    {
+        Move inv = m;
+        if (inv.turn == CW)      inv.turn = CCW;
+        else if (inv.turn == CCW) inv.turn = CW;
+        // Double stays Double
+        return inv;
+    }
+}
 
 // solved cube constructor
 RubiksCube::RubiksCube()
@@ -181,27 +213,7 @@ vector<Move> RubiksCube::solveAStar(int maxDepth, int maxNodes) const
     if (isSolved())
         return {};
 
-    // Helper: detect if two moves are exact inverses
-    auto isInverse = [](const Move& a, const Move& b) -> bool
-    {
-        if (a.face != b.face) return false;
-
-        if (a.turn == Double && b.turn == Double) return true;
-        if ((a.turn == CW && b.turn == CCW) || (a.turn == CCW && b.turn == CW))
-            return true;
-
-        return false;
-    };
-
-    // All possible moves (18)
-    static const Move allMoves[] = {
-        {Up,    CW}, {Up,    CCW}, {Up,    Double},
-        {Down,  CW}, {Down,  CCW}, {Down,  Double},
-        {Left,  CW}, {Left,  CCW}, {Left,  Double},
-        {Right, CW}, {Right, CCW}, {Right, Double},
-        {Front, CW}, {Front, CCW}, {Front, Double},
-        {Back,  CW}, {Back,  CCW}, {Back,  Double}
-    };
+    
 
     std::vector<Node> nodes;
     nodes.reserve(maxNodes);
@@ -258,13 +270,13 @@ vector<Move> RubiksCube::solveAStar(int maxDepth, int maxNodes) const
             break; // Safety: stop if we expand too many nodes
 
         // Expand neighbors
-        for (const Move& m : allMoves)
+        for (const Move& m : kAllMoves)
         {
             // Small pruning: don't immediately apply the inverse of the parent move
             if (current.parent != -1)
             {
                 const Move& prev = nodes[current.parent].moveFromParent;
-                if (isInverse(prev, m))
+                if (isInverseMove(prev, m))
                     continue;
             }
 
@@ -300,6 +312,137 @@ vector<Move> RubiksCube::solveAStar(int maxDepth, int maxNodes) const
     // Failed to find within the given limits
     return {};
 }
+
+vector<Move> RubiksCube::solveIDAStar(int maxIterations, int iterationDepth) const
+{
+    // If already solved, nothing to do
+    if (isSolved())
+        return {};
+
+    const int INF = std::numeric_limits<int>::max();
+    const int maxDepth = iterationDepth;
+
+    // Start cube (copy of current state)
+    RubiksCube start = *this;
+
+    // We’ll reuse the same move list as in A*
+    static const Move allMoves[] = {
+        {Up,    CW}, {Up,    CCW}, {Up,    Double},
+        {Down,  CW}, {Down,  CCW}, {Down,  Double},
+        {Left,  CW}, {Left,  CCW}, {Left,  Double},
+        {Right, CW}, {Right, CCW}, {Right, Double},
+        {Front, CW}, {Front, CCW}, {Front, Double},
+        {Back,  CW}, {Back,  CCW}, {Back,  Double}
+    };
+
+    auto isInverse = [](const Move& a, const Move& b) -> bool
+    {
+        if (a.face != b.face) return false;
+        if (a.turn == Double && b.turn == Double) return true;
+        if ((a.turn == CW && b.turn == CCW) || (a.turn == CCW && b.turn == CW))
+            return true;
+        return false;
+    };
+
+    auto inverseOf = [](const Move& m) -> Move
+    {
+        Move inv = m;
+        if (inv.turn == CW)       inv.turn = CCW;
+        else if (inv.turn == CCW) inv.turn = CW;
+        // Double stays Double
+        return inv;
+    };
+
+    // Path we are building
+    std::vector<Move> path;
+
+    // Initial f-threshold = h(start)
+    int threshold = start.heuristic();
+
+    // Recursive DFS with f-bound and depth bound
+    std::function<int(RubiksCube&, int, int, const Move&)> dfs;
+    dfs = [&](RubiksCube& cube, int g, int curThreshold, const Move& prevMove) -> int
+    {
+        int h = cube.heuristic();
+        int f = g + h;
+
+        if (f > curThreshold)
+            return f;   // candidate for next threshold
+
+        if (cube.isSolved())
+            return -1;  // signal success
+
+        if (g >= maxDepth)
+            return INF;
+
+        int minNext = INF;
+
+        for (const Move& m : allMoves)
+        {
+            // Pruning: no same face twice in a row
+            if (prevMove.face != Face::Count && m.face == prevMove.face)
+                continue;
+
+            // Optional: avoid immediate inverse
+            if (prevMove.face != Face::Count && isInverse(prevMove, m))
+                continue;
+
+            // Apply move
+            cube.applyMove(m.face, m.turn);
+            path.push_back(m);
+
+            int t = dfs(cube, g + 1, curThreshold, m);
+
+            if (t == -1)
+                return -1;  // solution found, bubble up
+
+            if (t < minNext)
+                minNext = t;
+
+            // Undo move
+            path.pop_back();
+            Move inv = inverseOf(m);
+            cube.applyMove(inv.face, inv.turn);
+        }
+
+        return minNext;
+    };
+
+    int iteration = 0;
+
+    while (true)
+    {
+        path.clear();
+        RubiksCube work = start;
+        Move dummyPrev{ Face::Count, CW };  // “no previous move”
+
+        int t = dfs(work, 0, threshold, dummyPrev);
+
+        if (t == -1)
+        {
+            // Solution in 'path'
+            return path;
+        }
+
+        if (t == INF)
+        {
+            // No solution within depth bound
+            return {};
+        }
+
+        threshold = t;
+        ++iteration;
+
+        // maxIterations <= 0  → endless
+        if (maxIterations > 0 && iteration >= maxIterations)
+        {
+            // Gave up due to iteration limit
+            return {};
+        }
+    }
+}
+
+
 
 
 ///// FACE ROTATION HELPERS /////

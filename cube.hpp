@@ -119,9 +119,14 @@ public:
     // Hash of the cube state (for unordered_map)
     std::size_t hash() const;
 
-    // A* solver: returns sequence of moves from *this to solved
-    // maxDepth: depth cutoff; maxNodes: safety cap to avoid explosion
+        // A* solver (kept around, but no longer used by the visualizer)
     vector<Move> solveAStar(int maxDepth = 12, int maxNodes = 100000) const;
+
+    // IDA* solver:
+    //  - maxIterations <= 0  → unlimited iterations
+    //  - iterationDepth     → maximum allowed solution depth
+    vector<Move> solveIDAStar(int maxIterations = -1, int iterationDepth = 24) const;
+
 
 private:
     array<Side, FACE_COUNT> faces_;
