@@ -46,8 +46,6 @@ public:
 
     RubiksCube();
 
-    // void scramble(int moveCount);
-
     // graphics accessor
     const Side& face(Face input) const { return faces_[input]; }
 

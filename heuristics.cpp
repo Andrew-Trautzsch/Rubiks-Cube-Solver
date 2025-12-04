@@ -80,6 +80,7 @@ bool RubiksCube::isSolved() const
 
 // ----- RubiksCube Heuristic Implementation -----
 
+// determines the max lower bound of moves required to solve the cube
 int RubiksCube::cubieHeuristic() const 
 {
     using std::sort;

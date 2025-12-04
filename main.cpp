@@ -353,28 +353,7 @@ void updateCurrentMove(float dt)
     }
 }
 
-void display()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    int viewH = (g_winH > g_uiHeight) ? (g_winH - g_uiHeight) : 1;
-    glViewport(0, g_uiHeight, g_winW, viewH);
-
-    glMatrixMode(GL_PROJECTION); glLoadIdentity();
-    gluPerspective(45.0, (double)g_winW / (double)viewH, 0.1, 100.0);
-
-    glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-    glTranslatef(0,0,-g_camDist);
-    glRotatef(g_camAngleX, 1,0,0);
-    glRotatef(g_camAngleY, 0,1,0);
-
-    drawCube3D(g_cube, g_currentMoveActive, g_currentMove, g_moveProgress, g_moveDuration);
-
-    glViewport(0,0,g_winW,g_uiHeight);
-    drawUI();
-
-    glutSwapBuffers();
-}
-
+// update window size
 void reshape(int w,int h)
 {
     g_winW = w; g_winH = h;
@@ -382,6 +361,7 @@ void reshape(int w,int h)
     glutPostRedisplay();
 }
 
+// advances animations
 void idle()
 {
     int now = glutGet(GLUT_ELAPSED_TIME);
@@ -409,6 +389,28 @@ void startSolveAndPlay()
     g_moveProgress = 0.0f;
     g_lastTimeMs = glutGet(GLUT_ELAPSED_TIME);
     g_solveText = movesToString(sol);
+}
+
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    int viewH = (g_winH > g_uiHeight) ? (g_winH - g_uiHeight) : 1;
+    glViewport(0, g_uiHeight, g_winW, viewH);
+
+    glMatrixMode(GL_PROJECTION); glLoadIdentity();
+    gluPerspective(45.0, (double)g_winW / (double)viewH, 0.1, 100.0);
+
+    glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+    glTranslatef(0,0,-g_camDist);
+    glRotatef(g_camAngleX, 1,0,0);
+    glRotatef(g_camAngleY, 0,1,0);
+
+    drawCube3D(g_cube, g_currentMoveActive, g_currentMove, g_moveProgress, g_moveDuration);
+
+    glViewport(0,0,g_winW,g_uiHeight);
+    drawUI();
+
+    glutSwapBuffers();
 }
 
 int main(int argc,char** argv)
