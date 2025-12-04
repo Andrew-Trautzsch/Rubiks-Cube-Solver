@@ -67,6 +67,24 @@ void drawUI();
 void recomputeButtons();
 void startSolveAndPlay();
 
+// Queue a single move (manual) to be animated using the same
+// machinery as the solver playback.
+void enqueueAnimatedMove(Face f, Turn t)
+{
+    // Don't interrupt an animation/solver already running
+    if (g_solutionPlaying || g_currentMoveActive)
+        return;
+
+    g_solutionMoves.clear();
+    g_solutionMoves.push_back(Move{f, t});
+    g_solutionIndex      = 0;
+    g_solutionPlaying    = true;
+    g_currentMoveActive  = false;
+    g_moveProgress       = 0.0f;
+    g_lastTimeMs         = glutGet(GLUT_ELAPSED_TIME);
+}
+
+
 // ---------- Utilities ----------
 void drawText2D(int x, int y, const std::string &s)
 {
@@ -131,16 +149,40 @@ bool cubieOnFaceLayer(int ix,int iy,int iz, Face f)
 bool currentAnimatedAngle(float &outAngle)
 {
     if (!g_currentMoveActive) return false;
+
     float t = g_moveProgress / g_moveDuration;
     if (t > 1.0f) t = 1.0f;
-    float baseAngle = 90.0f;
-    switch(g_currentMove.turn){
-        case CW:     outAngle = -baseAngle * t;    break;
-        case CCW:    outAngle =  baseAngle * t;    break;
-        case Double: outAngle = -2.0f * baseAngle * t; break;
+    const float baseAngle = 90.0f;
+
+    // For Up and Down, the sign is opposite from the other faces
+    // so that the visual rotation matches the cube's neighbor-strip
+    // logic in rotateTop/rotateBottom.
+    float faceSign = (g_currentMove.face == Up || g_currentMove.face == Down)
+                     ? 1.0f
+                     : -1.0f;
+
+    switch (g_currentMove.turn)
+    {
+    case CW:
+        // 90° in the cube's "CW" direction for this face
+        outAngle = faceSign * baseAngle * t;
+        break;
+
+    case CCW:
+        // 90° in the opposite direction
+        outAngle = -faceSign * baseAngle * t;
+        break;
+
+    case Double:
+        // 180°; direction doesn't matter visually, but we keep it
+        // consistent with CW.
+        outAngle = 2.0f * faceSign * baseAngle * t;
+        break;
     }
+
     return true;
 }
+
 
 // ---------- Accessing stickers from cube state ----------
 
@@ -411,8 +453,7 @@ void recomputeButtons()
                 Turn t          = turnForRow(r);
 
                 addButton(cx, y0, colW, rowH, lab, [f,t]() {
-                    g_cube.applyMove(f,t);
-                    glutPostRedisplay();
+                    enqueueAnimatedMove(f, t);
                 });
                 cx += colW + padX;
             }
@@ -604,25 +645,25 @@ void keyboard(unsigned char key,int x,int y)
     if ((g_solutionPlaying || g_currentMoveActive) && key != 27) return;
 
     switch(key){
-    case 'f': g_cube.applyMove(Front, CW); break;
-    case 'F': g_cube.applyMove(Front, CCW); break;
-    case 'b': g_cube.applyMove(Back, CW); break;
-    case 'B': g_cube.applyMove(Back, CCW); break;
-    case 'u': g_cube.applyMove(Up, CW); break;
-    case 'U': g_cube.applyMove(Up, CCW); break;
-    case 'd': g_cube.applyMove(Down, CW); break;
-    case 'D': g_cube.applyMove(Down, CCW); break;
-    case 'l': g_cube.applyMove(Left, CW); break;
-    case 'L': g_cube.applyMove(Left, CCW); break;
-    case 'r': g_cube.applyMove(Right, CW); break;
-    case 'R': g_cube.applyMove(Right, CCW); break;
+    case 'f': enqueueAnimatedMove(Front, CW);    break;
+    case 'F': enqueueAnimatedMove(Front, CCW);   break;
+    case 'b': enqueueAnimatedMove(Back,  CW);    break;
+    case 'B': enqueueAnimatedMove(Back,  CCW);   break;
+    case 'u': enqueueAnimatedMove(Up,    CW);    break;
+    case 'U': enqueueAnimatedMove(Up,    CCW);   break;
+    case 'd': enqueueAnimatedMove(Down,  CW);    break;
+    case 'D': enqueueAnimatedMove(Down,  CCW);   break;
+    case 'l': enqueueAnimatedMove(Left,  CW);    break;
+    case 'L': enqueueAnimatedMove(Left,  CCW);   break;
+    case 'r': enqueueAnimatedMove(Right, CW);    break;
+    case 'R': enqueueAnimatedMove(Right, CCW);   break;
 
-    case '1': g_cube.applyMove(Front, Double); break;
-    case '2': g_cube.applyMove(Back, Double); break;
-    case '3': g_cube.applyMove(Up, Double); break;
-    case '4': g_cube.applyMove(Down, Double); break;
-    case '5': g_cube.applyMove(Left, Double); break;
-    case '6': g_cube.applyMove(Right, Double); break;
+    case '1': enqueueAnimatedMove(Front, Double); break;
+    case '2': enqueueAnimatedMove(Back,  Double); break;
+    case '3': enqueueAnimatedMove(Up,    Double); break;
+    case '4': enqueueAnimatedMove(Down,  Double); break;
+    case '5': enqueueAnimatedMove(Left,  Double); break;
+    case '6': enqueueAnimatedMove(Right, Double); break;
 
     case 's': doScrambleWithLog(g_scrambleCount); break;
 
