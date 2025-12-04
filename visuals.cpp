@@ -12,13 +12,13 @@ const float CUBIE_SIZE    = CUBIE_SPACING * 0.92f;
 void setColor(Color c)
 {
     switch (c) {
-    case White:  glColor3f(1,1,1); break;
+    case White: glColor3f(1,1,1); break;
     case Yellow: glColor3f(1,1,0); break;
-    case Red:    glColor3f(1,0,0); break;
+    case Red: glColor3f(1,0,0); break;
     case Orange: glColor3f(1,0.5f,0); break;
-    case Blue:   glColor3f(0,0,1); break;
-    case Green:  glColor3f(0,1,0); break;
-    default:     glColor3f(0.5f,0.5f,0.5f); break;
+    case Blue: glColor3f(0,0,1); break;
+    case Green: glColor3f(0,1,0); break;
+    default: glColor3f(0.5f,0.5f,0.5f); break;
     }
 }
 
@@ -70,6 +70,7 @@ static bool cubieOnFaceLayer(int ix,int iy,int iz, Face f)
     }
 }
 
+// animation angle calculations, takes face and axis of rotation and returns rotation of face * progress
 static bool calculateAnimAngle(bool active, const Move& move, float progress, float duration, float &outAngle)
 {
     if (!active) return false;
@@ -90,17 +91,18 @@ static bool calculateAnimAngle(bool active, const Move& move, float progress, fl
     return true;
 }
 
+// helper function for drawing stickers on cubies
 static Color getStickerColor(const RubiksCube& cube, int ix, int iy, int iz, Face f)
 {
     const Side &side = cube.face(f);
     int row=0,col=0;
     switch(f){
     case Front: row = 1-iy; col = ix+1; break;
-    case Back:  row = 1-iy; col = 1-ix; break;
+    case Back: row = 1-iy; col = 1-ix; break;
     case Right: row = 1-iy; col = 1-iz; break;
-    case Left:  row = 1-iy; col = iz+1; break;
-    case Up:    row = iz+1; col = ix+1; break;
-    case Down:  row = 1-iz; col = ix+1; break;
+    case Left: row = 1-iy; col = iz+1; break;
+    case Up: row = iz+1; col = ix+1; break;
+    case Down: row = 1-iz; col = ix+1; break;
     default:    break;
     }
     if (row < 0) row = 0; else if (row > 2) row = 2;

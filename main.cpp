@@ -1,5 +1,3 @@
-// main.cpp - Rubik's Cube visualizer with interactive heuristic UI
-
 #include <GL/freeglut.h>
 #include <iostream>
 #include <vector>
@@ -21,13 +19,13 @@ int  g_lastMouseY = 0;
 
 // Solver / animation
 std::vector<Move> g_solutionMoves;
-int   g_solutionIndex       = 0;
-bool  g_solutionPlaying     = false;
-bool  g_currentMoveActive   = false;
+int   g_solutionIndex = 0;
+bool  g_solutionPlaying = false;
+bool  g_currentMoveActive = false;
 Move  g_currentMove;
-float g_moveProgress        = 0.0f;
-const float g_moveDuration  = 0.30f;
-int   g_lastTimeMs          = 0;
+float g_moveProgress = 0.0f;
+const float g_moveDuration = 0.30f;
+int   g_lastTimeMs = 0;
 
 // UI state
 int g_winW = 800, g_winH = 600;
@@ -37,8 +35,8 @@ enum UITab { TAB_MANUAL = 0, TAB_HEURISTIC = 1 };
 int g_activeTab = TAB_MANUAL;
 
 std::vector<Move> g_scrambleHistory;
-std::string       g_scrambleText;
-std::string       g_solveText;
+std::string g_scrambleText;
+std::string g_solveText;
 
 struct Button {
     int x0,y0,x1,y1;
@@ -52,20 +50,22 @@ std::vector<Button> g_buttons;
 void recomputeButtons();
 void startSolveAndPlay();
 
+// Handles animations for manual input (keyboard or buttons)
 void enqueueAnimatedMove(Face f, Turn t)
 {
     if (g_solutionPlaying || g_currentMoveActive) return;
 
     g_solutionMoves.clear();
     g_solutionMoves.push_back(Move{f, t});
-    g_solutionIndex      = 0;
-    g_solutionPlaying    = true;
-    g_currentMoveActive  = false;
-    g_moveProgress       = 0.0f;
-    g_lastTimeMs         = glutGet(GLUT_ELAPSED_TIME);
+    g_solutionIndex = 0;
+    g_solutionPlaying = true;
+    g_currentMoveActive = false;
+    g_moveProgress = 0.0f;
+    g_lastTimeMs = glutGet(GLUT_ELAPSED_TIME);
 }
 
-// handles individual moves
+///// Text Helpers /////
+// individual moves
 std::string moveToString(const Move& m)
 {
     char faceChar = ' ';
@@ -98,6 +98,7 @@ std::string movesToString(const std::vector<Move>& seq)
     return out;
 }
 
+// randomizes cube and creates log of moves
 void scramble(int moveCount)
 {
     if (moveCount <= 0) return;
@@ -122,7 +123,7 @@ void scramble(int moveCount)
 
     g_solveText.clear();
     g_solutionMoves.clear();
-    g_solutionPlaying   = false;
+    g_solutionPlaying = false;
     g_currentMoveActive = false;
 
     std::string seqText = movesToString(thisScramble);
@@ -132,6 +133,7 @@ void scramble(int moveCount)
     }
 }
 
+// creates and handles menu buttons
 void recomputeButtons()
 {
     g_buttons.clear();
@@ -148,7 +150,7 @@ void recomputeButtons()
         x += tabWidth + padX;
     };
 
-    addTab("Manual",     TAB_MANUAL);
+    addTab("Manual", TAB_MANUAL);
     addTab("Heuristics", TAB_HEURISTIC);
 
     int contentTop = tabY0 - padY;
@@ -262,6 +264,8 @@ void drawUI()
     glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW);
 }
 
+
+///// Mouse Controls /////
 void mouse(int button, int state, int x, int y)
 {
     int uiY = g_winH - y;
@@ -290,6 +294,8 @@ void motion(int x,int y)
     glutPostRedisplay();
 }
 
+
+///// Keyboard Controls /////
 void keyboard(unsigned char key,int x,int y)
 {
     if ((g_solutionPlaying || g_currentMoveActive) && key != 27) return;

@@ -30,13 +30,8 @@ struct Side
         for(int i=0; i<SIZE; i++) for(int j=0; j<SIZE; j++) squares[i][j] = fillColor;
     }
 
-    // int colorMismatch() const;
-    // vector<Color> getRow(int) const;
-    // vector<Color> getColumn(int) const;
     // used in rubiks cube constructor
     Color getCenter() const {return squares[1][1];}
-    // void setRow(int, const array<Color, SIZE>&);
-    // void setColumn(int, const array<Color, SIZE>&);
 
     // Face rotations
     void rotateCW();
@@ -51,18 +46,13 @@ public:
 
     RubiksCube();
 
-    void scramble(int moveCount);
+    // void scramble(int moveCount);
 
-    // graphics accessors
-    // Side& face(Face input) { return faces_[input]; }
+    // graphics accessor
     const Side& face(Face input) const { return faces_[input]; }
 
     // wrapper for rotations of faces AND sides
     void applyMove(Face, Turn);
-    // void applyMove(const Move& m) { applyMove(m.face, m.turn); }
-
-    // bool operator==(const RubiksCube& other) const;
-    // bool operator!=(const RubiksCube& other) const { return !(*this == other); }
     
     // Heuristics
     bool isSolved() const;

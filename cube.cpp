@@ -15,20 +15,20 @@ RubiksCube::RubiksCube()
 }
 
 // randomizes cube with a series of random moves
-void RubiksCube::scramble(int moveCount)
-{
-    static std::mt19937 rng(std::random_device{}());
+// void RubiksCube::scramble(int moveCount)
+// {
+//     static std::mt19937 rng(std::random_device{}());
 
-    std::uniform_int_distribution<int> faceDist(0, Count - 1);
-    std::uniform_int_distribution<int> turnDist(0, 2); // CW, CCW, Double
+//     std::uniform_int_distribution<int> faceDist(0, Count - 1);
+//     std::uniform_int_distribution<int> turnDist(0, 2); // CW, CCW, Double
 
-    for (int i = 0; i < moveCount; ++i)
-    {
-        Face f = static_cast<Face>(faceDist(rng));
-        Turn t = static_cast<Turn>(turnDist(rng));
-        applyMove(f, t);
-    }
-}
+//     for (int i = 0; i < moveCount; ++i)
+//     {
+//         Face f = static_cast<Face>(faceDist(rng));
+//         Turn t = static_cast<Turn>(turnDist(rng));
+//         applyMove(f, t);
+//     }
+// }
 
 // core move dispatcher
 void RubiksCube::applyMove(Face f, Turn t)
@@ -44,26 +44,6 @@ void RubiksCube::applyMove(Face f, Turn t)
     default:    break;
     }
 }
-
-// equality: all faces must match
-// bool RubiksCube::operator==(const RubiksCube& other) const
-// {
-//     for (int fi = 0; fi < FACE_COUNT; ++fi)
-//     {
-//         const Side& a = faces_[fi];
-//         const Side& b = other.faces_[fi];
-
-//         for (int r = 0; r < Side::SIZE; ++r)
-//         {
-//             for (int c = 0; c < Side::SIZE; ++c)
-//             {
-//                 if (a.squares[r][c] != b.squares[r][c])
-//                     return false;
-//             }
-//         }
-//     }
-//     return true;
-// }
 
 ///// FACE ROTATION HELPERS /////
 
