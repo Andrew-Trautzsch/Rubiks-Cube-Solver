@@ -9,6 +9,8 @@
         "cube.cpp",
         "side.cpp",
         "main.cpp",
+        "heuristics.cpp",
+        "visuals.cpp",
         "-Iexternal/freeglut/include",
         "-Lexternal/freeglut/lib/x64",
         "-lfreeglut",
