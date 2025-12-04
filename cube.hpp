@@ -64,7 +64,6 @@ public:
     // Heuristics (implemented in heuristics.cpp)
     int cubieHeuristic() const;
     int heuristic() const { return cubieHeuristic(); }
-    std::size_t hash() const;
 
     // Solvers (implemented in heuristics.cpp)
     vector<Move> solveIDAStar(int maxIterations = -1, int iterationDepth = 24) const;

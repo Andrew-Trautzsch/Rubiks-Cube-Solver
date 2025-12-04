@@ -208,15 +208,13 @@ void recomputeButtons()
              g_solutionMoves.clear(); g_solutionPlaying = false; g_currentMoveActive = false;
              glutPostRedisplay();
         });
-        addBtn(120, "Solve IDA* (p)", [](){ startSolveAndPlay(); glutPostRedisplay(); });
+        addBtn(120, "Solve IDA*", [](){ startSolveAndPlay(); glutPostRedisplay(); });
 
         addBtn(32, "-", [](){ if (g_scrambleCount>0) g_scrambleCount--; recomputeButtons(); glutPostRedisplay(); });
         x-=padX; x+=4;
         addBtn(80, "N:"+std::to_string(g_scrambleCount), [](){});
         x-=padX; x+=4;
         addBtn(32, "+", [](){ g_scrambleCount++; recomputeButtons(); glutPostRedisplay(); });
-        
-        addBtn(220, "Drag: rotate view   |   p: Solve", [](){});
     }
 }
 

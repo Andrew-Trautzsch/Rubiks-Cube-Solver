@@ -7,24 +7,28 @@
 
 // ----- Heuristic Data Structures -----
 
-struct StickerPos {
+struct StickerPos 
+{
     Face f;
     int r;
     int c;
 };
 
-struct CornerSlot {
+struct CornerSlot 
+{
     StickerPos s[3];
 };
 
-struct EdgeSlot {
+struct EdgeSlot 
+{
     StickerPos s[2];
 };
 
 // Corner slots: each is a fixed *position* in the cube
 // 0: UFR, 1: UFL, 2: UBL, 3: UBR,
 // 4: DFR, 5: DFL, 6: DBL, 7: DBR
-static const CornerSlot kCornerSlots[8] = {
+static const CornerSlot kCornerSlots[8] =
+{
     { { {Up,   2, 2}, {Front, 0, 2}, {Right, 0, 0} } }, // 0: UFR
     { { {Up,   2, 0}, {Front, 0, 0}, {Left,  0, 2} } }, // 1: UFL
     { { {Up,   0, 0}, {Back,  0, 2}, {Left,  0, 0} } }, // 2: UBL
@@ -38,7 +42,8 @@ static const CornerSlot kCornerSlots[8] = {
 // Edge slots: 12 fixed positions
 // 0: UF, 1: UR, 2: UB, 3: UL, 4: DF, 5: DR, 6: DB, 7: DL,
 // 8: FR, 9: FL, 10: BR, 11: BL
-static const EdgeSlot kEdgeSlots[12] = {
+static const EdgeSlot kEdgeSlots[12] =
+{
     { { {Up,   2, 1}, {Front, 0, 1} } }, // 0: UF
     { { {Up,   1, 2}, {Right, 0, 1} } }, // 1: UR
     { { {Up,   0, 1}, {Back,  0, 1} } }, // 2: UB
@@ -55,27 +60,8 @@ static const EdgeSlot kEdgeSlots[12] = {
 
 // ----- RubiksCube Heuristic Implementation -----
 
-std::size_t RubiksCube::hash() const
+int RubiksCube::cubieHeuristic() const 
 {
-    // 64-bit FNV-1a over all 54 stickers
-    std::size_t h = 1469598103934665603ull;
-
-    for (int f = 0; f < FACE_COUNT; ++f)
-    {
-        for (int r = 0; r < Side::SIZE; ++r)
-        {
-            for (int c = 0; c < Side::SIZE; ++c)
-            {
-                std::uint8_t v = static_cast<std::uint8_t>(faces_[f].squares[r][c]);
-                h ^= v;
-                h *= 1099511628211ull;
-            }
-        }
-    }
-    return h;
-}
-
-int RubiksCube::cubieHeuristic() const {
     using std::array;
     using std::sort;
 
@@ -166,7 +152,7 @@ int RubiksCube::cubieHeuristic() const {
 
     int h_pos_corners = ceil_div(misplacedCorners,     4);
     int h_pos_edges   = ceil_div(misplacedEdges,       4);
-    int h_ori_corners = ceil_div(misorientedCorners,   3);
+    int h_ori_corners = ceil_div(misorientedCorners,   4);
     int h_ori_edges   = ceil_div(misorientedEdges,     4);
 
     int h = std::max(
