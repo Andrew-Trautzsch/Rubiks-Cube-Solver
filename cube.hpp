@@ -4,6 +4,13 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <random>
+#include <algorithm>
+#include <limits>
+#include <functional>
+#include <cstdint>
+#include <GL/freeglut.h>
+#include <iostream>
 
 using std::vector; using std::array;
 
