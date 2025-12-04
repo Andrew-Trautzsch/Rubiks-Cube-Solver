@@ -16,9 +16,7 @@ RubiksCube::RubiksCube()
 
 // manual-input constructor
 RubiksCube::RubiksCube(const std::array<Side, FACE_COUNT>& faces)
-    : faces_(faces)
-{
-}
+    : faces_(faces) {}
 
 // randomizes cube with a series of random moves
 void RubiksCube::scramble(int moveCount)

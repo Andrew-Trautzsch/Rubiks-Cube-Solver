@@ -62,7 +62,6 @@ static const EdgeSlot kEdgeSlots[12] =
 
 int RubiksCube::cubieHeuristic() const 
 {
-    using std::array;
     using std::sort;
 
     static bool initialized = false;
@@ -150,10 +149,10 @@ int RubiksCube::cubieHeuristic() const
         return (x + d - 1) / d;
     };
 
-    int h_pos_corners = ceil_div(misplacedCorners,     4);
-    int h_pos_edges   = ceil_div(misplacedEdges,       4);
-    int h_ori_corners = ceil_div(misorientedCorners,   4);
-    int h_ori_edges   = ceil_div(misorientedEdges,     4);
+    int h_pos_corners = ceil_div(misplacedCorners, 4);
+    int h_pos_edges = ceil_div(misplacedEdges, 4);
+    int h_ori_corners = ceil_div(misorientedCorners, 4);
+    int h_ori_edges = ceil_div(misorientedEdges, 4);
 
     int h = std::max(
         std::max(h_pos_corners, h_pos_edges),
@@ -184,21 +183,13 @@ vector<Move> RubiksCube::solveIDAStar(int maxIterations, int iterationDepth) con
         {Back,  CW}, {Back,  CCW}, {Back,  Double}
     };
 
-    auto isInverse = [](const Move& a, const Move& b) -> bool
-    {
-        if (a.face != b.face) return false;
-        if (a.turn == Double && b.turn == Double) return true;
-        if ((a.turn == CW && b.turn == CCW) || (a.turn == CCW && b.turn == CW))
-            return true;
-        return false;
-    };
-
+    // gives move to invert to restore path
     auto inverseOf = [](const Move& m) -> Move
     {
-        Move inv = m;
-        if (inv.turn == CW)       inv.turn = CCW;
-        else if (inv.turn == CCW) inv.turn = CW;
-        return inv;
+        Move tmp = m;
+        if (tmp.turn == CW)       tmp.turn = CCW;
+        else if (tmp.turn == CCW) tmp.turn = CW;
+        return tmp;
     };
 
     std::vector<Move> path;
@@ -208,31 +199,37 @@ vector<Move> RubiksCube::solveIDAStar(int maxIterations, int iterationDepth) con
     std::function<int(RubiksCube&, int, int, const Move&)> dfs;
     dfs = [&](RubiksCube& cube, int g, int curThreshold, const Move& prevMove) -> int
     {
+        // global heuristics formula
         int h = cube.heuristic();
         int f = g + h;
 
+        // important checks
         if (f > curThreshold) return f;
         if (cube.isSolved()) return -1;
         if (g >= maxDepth) return INF;
 
+        // keeps track of smallest f value over threshold for next threshold
         int minNext = INF;
 
+        // searches all moves
         for (const Move& m : allMoves)
         {
+            // move redundancy check
             if (prevMove.face != Face::Count && m.face == prevMove.face) continue;
-            if (prevMove.face != Face::Count && isInverse(prevMove, m)) continue;
 
             cube.applyMove(m.face, m.turn);
             path.push_back(m);
 
-            int t = dfs(cube, g + 1, curThreshold, m);
+            // recursive
+            int tmp = dfs(cube, g + 1, curThreshold, m);
 
-            if (t == -1) return -1;
-            if (t < minNext) minNext = t;
+            if (tmp == -1) return -1;
+            if (tmp < minNext) minNext = tmp;
 
+            // undoes move after backtracking
             path.pop_back();
-            Move inv = inverseOf(m);
-            cube.applyMove(inv.face, inv.turn);
+            Move invMove = inverseOf(m);
+            cube.applyMove(invMove.face, invMove.turn);
         }
         return minNext;
     };
@@ -241,15 +238,15 @@ vector<Move> RubiksCube::solveIDAStar(int maxIterations, int iterationDepth) con
     while (true)
     {
         path.clear();
-        RubiksCube work = start;
+        // purely used to substitute input
         Move dummyPrev{ Face::Count, CW };
 
-        int t = dfs(work, 0, threshold, dummyPrev);
+        int tmp = dfs(start, 0, threshold, dummyPrev);
 
-        if (t == -1) return path;
-        if (t == INF) return {};
+        if (tmp == -1) return path;
+        if (tmp == INF) return {};
 
-        threshold = t;
+        threshold = tmp;
         ++iteration;
 
         if (maxIterations > 0 && iteration >= maxIterations) return {};

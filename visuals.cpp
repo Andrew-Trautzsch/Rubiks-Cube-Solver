@@ -22,12 +22,14 @@ void setColor(Color c)
     }
 }
 
+// used for UI
 void drawText2D(int x, int y, const std::string &s)
 {
     glRasterPos2i(x,y);
     for(char c: s) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c);
 }
 
+// used for UI
 void drawFilledRect2D(int x0,int y0,int x1,int y1)
 {
     glBegin(GL_QUADS);
@@ -38,6 +40,7 @@ void drawFilledRect2D(int x0,int y0,int x1,int y1)
     glEnd();
 }
 
+// used for animation
 static void axisForFace(Face f, float &ax, float &ay, float &az)
 {
     ax = ay = az = 0.0f;
@@ -53,6 +56,7 @@ static void axisForFace(Face f, float &ax, float &ay, float &az)
     }
 }
 
+// used for animation
 static bool cubieOnFaceLayer(int ix,int iy,int iz, Face f)
 {
     switch(f){
@@ -70,18 +74,18 @@ static bool calculateAnimAngle(bool active, const Move& move, float progress, fl
 {
     if (!active) return false;
 
-    float t = progress / duration;
-    if (t > 1.0f) t = 1.0f;
+    float tmp = progress / duration;
+    if (tmp > 1.0f) tmp = 1.0f;
     const float baseAngle = 90.0f;
 
-    // Standard CW logic is used in cube.cpp, so we invert for visual CW
+    // Standard CW logic
     float faceSign = -1.0f; 
 
     switch (move.turn)
     {
-    case CW:     outAngle = faceSign * baseAngle * t; break;
-    case CCW:    outAngle = -faceSign * baseAngle * t; break;
-    case Double: outAngle = 2.0f * faceSign * baseAngle * t; break;
+    case CW: outAngle = faceSign * baseAngle * tmp; break;
+    case CCW: outAngle = -faceSign * baseAngle * tmp; break;
+    case Double: outAngle = 2.0f * faceSign * baseAngle * tmp; break;
     }
     return true;
 }
@@ -104,6 +108,7 @@ static Color getStickerColor(const RubiksCube& cube, int ix, int iy, int iz, Fac
     return side.squares[row][col];
 }
 
+// helper for each cubie, draws stickers on each aswell
 static void drawCubie(const RubiksCube& cube, int ix, int iy, int iz)
 {
     float half = CUBIE_SIZE*0.5f;

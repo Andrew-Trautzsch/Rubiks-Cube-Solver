@@ -65,9 +65,10 @@ void enqueueAnimatedMove(Face f, Turn t)
     g_lastTimeMs         = glutGet(GLUT_ELAPSED_TIME);
 }
 
+// handles individual moves
 std::string moveToString(const Move& m)
 {
-    char faceChar = '?';
+    char faceChar = ' ';
     switch (m.face) {
     case Front: faceChar = 'F'; break;
     case Back:  faceChar = 'B'; break;
@@ -84,6 +85,7 @@ std::string moveToString(const Move& m)
     return s;
 }
 
+// handles a sequence of moves
 std::string movesToString(const std::vector<Move>& seq)
 {
     std::string out;
@@ -96,7 +98,7 @@ std::string movesToString(const std::vector<Move>& seq)
     return out;
 }
 
-void doScrambleWithLog(int moveCount)
+void scramble(int moveCount)
 {
     if (moveCount <= 0) return;
 
@@ -138,6 +140,7 @@ void recomputeButtons()
     int tabY0 = g_uiHeight - tabHeight - marginTop;
     int x = marginSide;
 
+    // creates tabs and manages switching
     auto addTab = [&](const std::string& label, UITab tabId) {
         Button b; b.x0=x; b.y0=tabY0; b.x1=x+tabWidth; b.y1=tabY0+tabHeight; b.label=label;
         b.onClick = [tabId](){ g_activeTab = tabId; recomputeButtons(); glutPostRedisplay(); };
@@ -201,7 +204,7 @@ void recomputeButtons()
             x += w + padX;
         };
 
-        addBtn(90, "Scramble", [](){ doScrambleWithLog(g_scrambleCount); glutPostRedisplay(); });
+        addBtn(90, "Scramble", [](){ scramble(g_scrambleCount); glutPostRedisplay(); });
         addBtn(70, "Reset", [](){
              g_cube = RubiksCube();
              g_scrambleHistory.clear(); g_scrambleText.clear(); g_solveText.clear();
@@ -301,7 +304,7 @@ void keyboard(unsigned char key,int x,int y)
     case '1': enqueueAnimatedMove(Front, Double); break; case '2': enqueueAnimatedMove(Back,  Double); break;
     case '3': enqueueAnimatedMove(Up,    Double); break; case '4': enqueueAnimatedMove(Down,  Double); break;
     case '5': enqueueAnimatedMove(Left,  Double); break; case '6': enqueueAnimatedMove(Right, Double); break;
-    case 's': doScrambleWithLog(g_scrambleCount); break;
+    case 's': scramble(g_scrambleCount); break;
     case '0':
         g_cube = RubiksCube();
         g_scrambleHistory.clear(); g_scrambleText.clear(); g_solveText.clear();
@@ -384,7 +387,7 @@ void idle()
 
 void startSolveAndPlay()
 {
-    int maxIterations  = -1;
+    int maxIterations  = g_scrambleCount;
     int iterationDepth = g_scrambleCount;
     std::vector<Move> sol = g_cube.solveIDAStar(maxIterations, iterationDepth);
 
