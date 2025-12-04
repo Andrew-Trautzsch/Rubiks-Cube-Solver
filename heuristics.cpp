@@ -10,18 +10,18 @@
 struct StickerPos 
 {
     Face f;
-    int r;
-    int c;
+    int row;
+    int col;
 };
 
 struct CornerSlot 
 {
-    StickerPos s[3];
+    StickerPos sticker[3];
 };
 
 struct EdgeSlot 
 {
-    StickerPos s[2];
+    StickerPos sticker[2];
 };
 
 // Corner slots: each is a fixed *position* in the cube
@@ -58,6 +58,26 @@ static const EdgeSlot kEdgeSlots[12] =
     { { {Back,  1, 2}, {Left,  1, 0} } }  // 11: BL
 };
 
+// check if each face is a solid color
+bool RubiksCube::isSolved() const
+{
+    for (int fi = 0; fi < FACE_COUNT; ++fi)
+    {
+        const Side& s = faces_[fi];
+        Color center = s.getCenter();
+
+        for (int row = 0; row < Side::SIZE; ++row)
+        {
+            for (int col = 0; col < Side::SIZE; ++col)
+            {
+                if (s.squares[row][col] != center)
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
 // ----- RubiksCube Heuristic Implementation -----
 
 int RubiksCube::cubieHeuristic() const 
@@ -69,35 +89,35 @@ int RubiksCube::cubieHeuristic() const
     static Color solvedEdgeColors[12][2];
 
     if (!initialized) {
-        RubiksCube solved; // default ctor = solved cube
+        RubiksCube solved; // solved cube
 
         // Record colors in solved state
         for (int i = 0; i < 8; ++i) {
             for (int k = 0; k < 3; ++k) {
-                const StickerPos &sp = kCornerSlots[i].s[k];
-                solvedCornerColors[i][k] = solved.faces_[sp.f].squares[sp.r][sp.c];
+                const StickerPos &sp = kCornerSlots[i].sticker[k];
+                solvedCornerColors[i][k] = solved.faces_[sp.f].squares[sp.row][sp.col];
             }
         }
         for (int i = 0; i < 12; ++i) {
             for (int k = 0; k < 2; ++k) {
-                const StickerPos &sp = kEdgeSlots[i].s[k];
-                solvedEdgeColors[i][k] = solved.faces_[sp.f].squares[sp.r][sp.c];
+                const StickerPos &sp = kEdgeSlots[i].sticker[k];
+                solvedEdgeColors[i][k] = solved.faces_[sp.f].squares[sp.row][sp.col];
             }
         }
         initialized = true;
     }
 
-    int misplacedCorners     = 0;
-    int misorientedCorners   = 0;
-    int misplacedEdges       = 0;
-    int misorientedEdges     = 0;
+    int misplacedCorners = 0;
+    int misorientedCorners = 0;
+    int misplacedEdges = 0;
+    int misorientedEdges = 0;
 
     // Corners
     for (int i = 0; i < 8; ++i) {
         Color cur[3];
         for (int k = 0; k < 3; ++k) {
-            const StickerPos &sp = kCornerSlots[i].s[k];
-            cur[k] = faces_[sp.f].squares[sp.r][sp.c];
+            const StickerPos &sp = kCornerSlots[i].sticker[k];
+            cur[k] = faces_[sp.f].squares[sp.row][sp.col];
         }
 
         array<int,3> setSolved{}, setCur{};
@@ -126,8 +146,8 @@ int RubiksCube::cubieHeuristic() const
     for (int i = 0; i < 12; ++i) {
         Color cur[2];
         for (int k = 0; k < 2; ++k) {
-            const StickerPos &sp = kEdgeSlots[i].s[k];
-            cur[k] = faces_[sp.f].squares[sp.r][sp.c];
+            const StickerPos &sp = kEdgeSlots[i].sticker[k];
+            cur[k] = faces_[sp.f].squares[sp.row][sp.col];
         }
 
         int s0 = static_cast<int>(solvedEdgeColors[i][0]);

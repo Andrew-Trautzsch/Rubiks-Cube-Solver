@@ -14,10 +14,6 @@ RubiksCube::RubiksCube()
     faces_[Back]  = Side(Color::Blue);
 }
 
-// manual-input constructor
-RubiksCube::RubiksCube(const std::array<Side, FACE_COUNT>& faces)
-    : faces_(faces) {}
-
 // randomizes cube with a series of random moves
 void RubiksCube::scramble(int moveCount)
 {
@@ -49,45 +45,25 @@ void RubiksCube::applyMove(Face f, Turn t)
     }
 }
 
-// check if each face is a solid color
-bool RubiksCube::isSolved() const
-{
-    for (int fi = 0; fi < FACE_COUNT; ++fi)
-    {
-        const Side& s = faces_[fi];
-        Color center = s.getCenter();
-
-        for (int r = 0; r < Side::SIZE; ++r)
-        {
-            for (int c = 0; c < Side::SIZE; ++c)
-            {
-                if (s.squares[r][c] != center)
-                    return false;
-            }
-        }
-    }
-    return true;
-}
-
 // equality: all faces must match
-bool RubiksCube::operator==(const RubiksCube& other) const
-{
-    for (int fi = 0; fi < FACE_COUNT; ++fi)
-    {
-        const Side& a = faces_[fi];
-        const Side& b = other.faces_[fi];
+// bool RubiksCube::operator==(const RubiksCube& other) const
+// {
+//     for (int fi = 0; fi < FACE_COUNT; ++fi)
+//     {
+//         const Side& a = faces_[fi];
+//         const Side& b = other.faces_[fi];
 
-        for (int r = 0; r < Side::SIZE; ++r)
-        {
-            for (int c = 0; c < Side::SIZE; ++c)
-            {
-                if (a.squares[r][c] != b.squares[r][c])
-                    return false;
-            }
-        }
-    }
-    return true;
-}
+//         for (int r = 0; r < Side::SIZE; ++r)
+//         {
+//             for (int c = 0; c < Side::SIZE; ++c)
+//             {
+//                 if (a.squares[r][c] != b.squares[r][c])
+//                     return false;
+//             }
+//         }
+//     }
+//     return true;
+// }
 
 ///// FACE ROTATION HELPERS /////
 

@@ -3,51 +3,51 @@
 ///// SIDE IMPLEMENTATION /////
 
 // returns 0-8, number == amount of colors != center
-int Side::colorMismatch() const {
-    Color center = getCenter();
-    int count = 0;
-    for (int r = 0; r < SIZE; ++r)
-        for (int c = 0; c < SIZE; ++c)
-            if (squares[r][c] != center)
-                ++count;
-    return count;   // 0..8
-}
+// int Side::colorMismatch() const {
+//     Color center = getCenter();
+//     int count = 0;
+//     for (int r = 0; r < SIZE; ++r)
+//         for (int c = 0; c < SIZE; ++c)
+//             if (squares[r][c] != center)
+//                 ++count;
+//     return count;   // 0..8
+// }
 
 // accessors
-vector<Color> Side::getRow(int row) const
-{
-    vector<Color> result;
-    result.reserve(SIZE);
+// vector<Color> Side::getRow(int row) const
+// {
+//     vector<Color> result;
+//     result.reserve(SIZE);
 
-    for (int c = 0; c < SIZE; ++c)
-        result.push_back(squares[row][c]);
+//     for (int c = 0; c < SIZE; ++c)
+//         result.push_back(squares[row][c]);
 
-    return result;
-}
+//     return result;
+// }
 
-vector<Color> Side::getColumn(int col) const
-{
-    vector<Color> result;
-    result.reserve(SIZE);
+// vector<Color> Side::getColumn(int col) const
+// {
+//     vector<Color> result;
+//     result.reserve(SIZE);
 
-    for (int r = 0; r < SIZE; ++r)
-        result.push_back(squares[r][col]);
+//     for (int r = 0; r < SIZE; ++r)
+//         result.push_back(squares[r][col]);
 
-    return result;
-}
+//     return result;
+// }
 
-// mutators
-void Side::setRow(int row, const array<Color, SIZE>& vals)
-{
-    for (int c = 0; c < SIZE; ++c)
-        squares[row][c] = vals[c];
-}
+// // mutators
+// void Side::setRow(int row, const array<Color, SIZE>& vals)
+// {
+//     for (int c = 0; c < SIZE; ++c)
+//         squares[row][c] = vals[c];
+// }
 
-void Side::setColumn(int col, const array<Color, SIZE>& vals)
-{
-    for (int r = 0; r < SIZE; ++r)
-        squares[r][col] = vals[r];
-}
+// void Side::setColumn(int col, const array<Color, SIZE>& vals)
+// {
+//     for (int r = 0; r < SIZE; ++r)
+//         squares[r][col] = vals[r];
+// }
 
 // rotate the 3x3 face 90° clockwise
 void Side::rotateCW()
@@ -77,7 +77,7 @@ void Side::rotateCCW()
     }
 }
 
-// rotate 180° (can just do two CW rotations)
+// rotate 180°
 void Side::rotate180()
 {
     rotateCW();

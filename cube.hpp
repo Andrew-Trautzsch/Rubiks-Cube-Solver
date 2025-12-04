@@ -30,12 +30,15 @@ struct Side
         for(int i=0; i<SIZE; i++) for(int j=0; j<SIZE; j++) squares[i][j] = fillColor;
     }
 
-    int colorMismatch() const;
-    vector<Color> getRow(int) const;
-    vector<Color> getColumn(int) const;
+    // int colorMismatch() const;
+    // vector<Color> getRow(int) const;
+    // vector<Color> getColumn(int) const;
+    // used in rubiks cube constructor
     Color getCenter() const {return squares[1][1];}
-    void setRow(int, const array<Color, SIZE>&);
-    void setColumn(int, const array<Color, SIZE>&);
+    // void setRow(int, const array<Color, SIZE>&);
+    // void setColumn(int, const array<Color, SIZE>&);
+
+    // Face rotations
     void rotateCW();
     void rotateCCW();
     void rotate180();
@@ -46,27 +49,26 @@ class RubiksCube
 public:
     static constexpr int FACE_COUNT = Face::Count;
 
-    RubiksCube(); 
-    explicit RubiksCube(const std::array<Side, FACE_COUNT>& faces);
+    RubiksCube();
 
     void scramble(int moveCount);
 
-    Side& face(Face input) { return faces_[input]; }
+    // graphics accessors
+    // Side& face(Face input) { return faces_[input]; }
     const Side& face(Face input) const { return faces_[input]; }
 
+    // wrapper for rotations of faces AND sides
     void applyMove(Face, Turn);
-    void applyMove(const Move& m) { applyMove(m.face, m.turn); }
+    // void applyMove(const Move& m) { applyMove(m.face, m.turn); }
 
-    bool isSolved() const;
-    bool operator==(const RubiksCube& other) const;
-    bool operator!=(const RubiksCube& other) const { return !(*this == other); }
+    // bool operator==(const RubiksCube& other) const;
+    // bool operator!=(const RubiksCube& other) const { return !(*this == other); }
     
-    // Heuristics (implemented in heuristics.cpp)
+    // Heuristics
+    bool isSolved() const;
     int cubieHeuristic() const;
     int heuristic() const { return cubieHeuristic(); }
-
-    // Solvers (implemented in heuristics.cpp)
-    vector<Move> solveIDAStar(int maxIterations = -1, int iterationDepth = 24) const;
+    vector<Move> solveIDAStar(int maxIterations = -1, int iterationDepth = 10) const;
 
 private:
     array<Side, FACE_COUNT> faces_;
@@ -79,7 +81,7 @@ private:
     void rotateBack(Turn);
 };
 
-// ----- Visual Functions -----
+///// Visual Functions /////
 
 void setColor(Color c);
 void drawCube3D(const RubiksCube& cube, bool isAnimating, const Move& animMove, float animProgress, float animDuration);
